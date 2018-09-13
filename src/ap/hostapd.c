@@ -175,6 +175,20 @@ static void hostapd_clear_old(struct hostapd_iface *iface)
 	}
 }
 
+//tttttttttttttttttttttttttt
+static void hostapd_clear_old_bss(struct hostapd_bss_config *bss)
+{
+	hostapd_flush_old_stations(bss,
+				WLAN_REASON_PREV_AUTH_NOT_VALID);
+	hostapd_broadcast_wep_clear(bss);
+
+#ifndef CONFIG_NO_RADIUS
+	/* TODO: update dynamic data based on changed configuration
+	 * items (e.g., open/close sockets, etc.) */
+	radius_client_flush(bss->radius, 0);
+#endif /* CONFIG_NO_RADIUS */
+}
+
 
 int hostapd_reload_config(struct hostapd_iface *iface)
 {
@@ -2596,6 +2610,27 @@ int hostapd_reload_iface(struct hostapd_iface *hapd_iface)
 	return 0;
 }
 
+//tttttttttesttttttttttttttttttttttttttttt
+int hostapd_reload_bss(struct hostapd_iface *hapd_iface, size_t idx)
+{
+	size_t j = idx;
+
+	wpa_printf(MSG_DEBUG, "Reload bss %s",
+				hapd_iface->conf->bss[j]->iface);
+
+	hostapd_set_security_params(hapd_iface->conf->bss[j], 1);
+
+	if (hostapd_config_check_bss(hapd_iface->conf->bss[j],
+					hapd_iface->conf, 1) < 0) {
+		wpa_printf(MSG_ERROR, "Updated bss configuration is invalid");
+		return -1;
+	}
+	hostapd_clear_old_bss(hapd_iface->bss[j]);
+
+	hostapd_reload_bss(hapd_iface->bss[j]);
+	return 0;
+}
+//tttttttttttttttttttttt
 
 int hostapd_disable_iface(struct hostapd_iface *hapd_iface)
 {
@@ -2987,6 +3022,7 @@ int hostapd_remove_iface(struct hapd_interfaces *interfaces, char *buf)
 		}
 
 		for (j = 0; j < hapd_iface->conf->num_bss; j++) {
+		nterface=wlan0
 			if (!os_strcmp(hapd_iface->conf->bss[j]->iface, buf)) {
 				hapd_iface->driver_ap_teardown =
 					!(hapd_iface->drv_flags &
