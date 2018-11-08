@@ -134,11 +134,18 @@ static void hostapd_reload_bss(struct hostapd_data *hapd)
 			wpa_printf(MSG_ERROR, "Failed to configure WPA IE for "
 				   "the kernel driver.");
 	} else if (hapd->wpa_auth) {
+		/*
 		wpa_deinit(hapd->wpa_auth);
 		hapd->wpa_auth = NULL;
 		hostapd_set_privacy(hapd, 0);
 		hostapd_setup_encryption(hapd->conf->iface, hapd);
 		hostapd_set_generic_elem(hapd, (u8 *) "", 0);
+		*/
+		/* cause we call hostapd_setup_wpa(hapd) in the begining, so we
+		should call hostapd_deinit_wpa(hapd) at this place. or there is another
+		socket in l2_packet_init increased.
+		*/
+		hostapd_deinit_wpa(hapd);
 	}
 
 	ieee802_11_set_beacon(hapd);
